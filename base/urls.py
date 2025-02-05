@@ -3,6 +3,7 @@ from .views import tasks,register,test
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
+
 urlpatterns = [
     path('tasks/', tasks ),
     path('tasks/<int:id>',tasks),

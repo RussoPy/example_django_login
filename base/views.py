@@ -39,43 +39,45 @@ def register(req):
 
 
 
-@api_view(['GET','POST','DELETE','PUT','PATCH'])
-def tasks(req,id=-1):
-    if req.method =='GET':
-        if id > -1:
-            try:
-                temp_task=Task.objects.get(id=id)
-                return Response (TaskSerializer(temp_task,many=False).data)
-            except Task.DoesNotExist:
-                return Response ("not found")
-        all_tasks=TaskSerializer(Task.objects.all(),many=True).data
-        return Response ( all_tasks)
-    if req.method =='POST':
-        tsk_serializer = TaskSerializer(data=req.data)
-        if tsk_serializer.is_valid():
-            tsk_serializer.save()
-            return Response ("post...")
-        else:
-            return Response (tsk_serializer.errors)
-    if req.method =='DELETE':
-        try:
-            temp_task=Task.objects.get(id=id)
-        except Task.DoesNotExist:
-            return Response ("not found")    
-       
-        temp_task.delete()
-        return Response ("del...")
-    if req.method =='PUT':
-        try:
-            temp_task=Task.objects.get(id=id)
-        except Task.DoesNotExist:
-            return Response ("not found")
-       
-        ser = TaskSerializer(data=req.data)
-        old_task = Task.objects.get(id=id)
-        res = ser.update(old_task, req.data)
-        return Response("‘upd’")
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def task_list(req):
+    user = req.user
 
+    if req.method == 'GET':
+        tasks = user.tasks.all()
+        serializer = TaskSerializer(tasks, many=True)
+        return Response(serializer.data)
+
+    elif req.method == 'POST':
+        serializer = TaskSerializer(data=req.data)
+        if serializer.is_valid():
+            serializer.save(user=user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def task_detail(req, pk):
+    try:
+        task = Task.objects.get(pk=pk, user=req.user)
+    except Task.DoesNotExist:
+        return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if req.method == 'GET':
+        serializer = TaskSerializer(task)
+        return Response(serializer.data)
+
+    elif req.method == 'PUT':
+        serializer = TaskSerializer(task, data=req.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif req.method == 'DELETE':
+        task.delete()
+        return Response({'message': 'Task deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])
@@ -84,3 +86,8 @@ def test(req):
     user = req.user
     temp_prod = user.task_set.all()
     return Response(TaskSerializer(temp_prod, many=True).data)
+
+from django.shortcuts import render
+
+def task_manager(request):
+    return render(request, 'task_manager.html')

@@ -7,13 +7,12 @@ from base import views
 
 
 urlpatterns = [
-    path('tasks/', views.task_list, name='task-list'),
     path('tasks/<int:pk>/', views.task_detail, name='task-detail'),
     path('register/', register ),
     path('test',test),
-    path('login', TokenObtainPairView.as_view()),    
-    path('task-manager/', views.task_manager, name='task_manager'),
-     path('api/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('login', TokenObtainPairView.as_view()),   
+    path('api/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
+    path('all-tasks', views.get_all_tasks, name='all-tasks'),
 
 ]
